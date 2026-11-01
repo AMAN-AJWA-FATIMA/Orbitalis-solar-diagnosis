@@ -1,0 +1,562 @@
+{
+  "n_observations": 10905,
+  "n_documented_anomalies": 1694,
+  "n_predicted_anomalies": 3166,
+  "precision": 0.5344283006948831,
+  "recall": 0.9988193624557261,
+  "f1": 0.6962962962962963,
+  "confusion_matrix": {
+    "labels": [
+      "Normal",
+      "Anomaly"
+    ],
+    "matrix": [
+      [
+        7737,
+        1474
+      ],
+      [
+        2,
+        1692
+      ]
+    ]
+  },
+  "classification_report": {
+    "Normal": {
+      "precision": 0.9997415686781238,
+      "recall": 0.8399739441971555,
+      "f1-score": 0.9129203539823009,
+      "support": 9211.0
+    },
+    "Anomaly": {
+      "precision": 0.5344283006948831,
+      "recall": 0.9988193624557261,
+      "f1-score": 0.6962962962962963,
+      "support": 1694.0
+    },
+    "accuracy": 0.8646492434662999,
+    "macro avg": {
+      "precision": 0.7670849346865034,
+      "recall": 0.9193966533264408,
+      "f1-score": 0.8046083251392986,
+      "support": 10905.0
+    },
+    "weighted avg": {
+      "precision": 0.9274590674434966,
+      "recall": 0.8646492434662999,
+      "f1-score": 0.8792696292028335,
+      "support": 10905.0
+    }
+  },
+  "roc_auc": 0.9580542975347606,
+  "average_precision": 0.7203370006469589,
+  "recall_type_1": 0.9981481481481481,
+  "n_type_1": 1080,
+  "recall_type_2": 1.0,
+  "n_type_2": 614,
+  "evaluation_sessions": [
+    {
+      "satellite": "RAAVANA",
+      "session": "11 March 2021"
+    },
+    {
+      "satellite": "UGUISU",
+      "session": "10 April 2021"
+    }
+  ],
+  "anomaly_distribution_test": [
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "11 March 2021",
+      "Panel_Label": "+X",
+      "ML_Status": "Anomaly",
+      "count": 97
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "11 March 2021",
+      "Panel_Label": "+X",
+      "ML_Status": "Normal",
+      "count": 983
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "11 March 2021",
+      "Panel_Label": "+Y",
+      "ML_Status": "Anomaly",
+      "count": 1078
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "11 March 2021",
+      "Panel_Label": "+Y",
+      "ML_Status": "Normal",
+      "count": 2
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "11 March 2021",
+      "Panel_Label": "+Z",
+      "ML_Status": "Anomaly",
+      "count": 509
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "11 March 2021",
+      "Panel_Label": "+Z",
+      "ML_Status": "Normal",
+      "count": 571
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "11 March 2021",
+      "Panel_Label": "-X",
+      "ML_Status": "Anomaly",
+      "count": 130
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "11 March 2021",
+      "Panel_Label": "-X",
+      "ML_Status": "Normal",
+      "count": 950
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "11 March 2021",
+      "Panel_Label": "-Z",
+      "ML_Status": "Anomaly",
+      "count": 125
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "11 March 2021",
+      "Panel_Label": "-Z",
+      "ML_Status": "Normal",
+      "count": 955
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "Panel_Label": "+X",
+      "ML_Status": "Anomaly",
+      "count": 148
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "Panel_Label": "+X",
+      "ML_Status": "Normal",
+      "count": 953
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "Panel_Label": "+Y",
+      "ML_Status": "Anomaly",
+      "count": 657
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "Panel_Label": "+Y",
+      "ML_Status": "Normal",
+      "count": 444
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "Panel_Label": "+Z",
+      "ML_Status": "Anomaly",
+      "count": 221
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "Panel_Label": "+Z",
+      "ML_Status": "Normal",
+      "count": 880
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "Panel_Label": "-X",
+      "ML_Status": "Anomaly",
+      "count": 124
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "Panel_Label": "-X",
+      "ML_Status": "Normal",
+      "count": 977
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "Panel_Label": "-Z",
+      "ML_Status": "Anomaly",
+      "count": 77
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "Panel_Label": "-Z",
+      "ML_Status": "Normal",
+      "count": 1024
+    }
+  ],
+  "anomaly_distribution_all": [
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "11 March 2021",
+      "Panel_Label": "+X",
+      "ML_Status": "Anomaly",
+      "count": 97
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "11 March 2021",
+      "Panel_Label": "+X",
+      "ML_Status": "Normal",
+      "count": 983
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "11 March 2021",
+      "Panel_Label": "+Y",
+      "ML_Status": "Anomaly",
+      "count": 1078
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "11 March 2021",
+      "Panel_Label": "+Y",
+      "ML_Status": "Normal",
+      "count": 2
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "11 March 2021",
+      "Panel_Label": "+Z",
+      "ML_Status": "Anomaly",
+      "count": 509
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "11 March 2021",
+      "Panel_Label": "+Z",
+      "ML_Status": "Normal",
+      "count": 571
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "11 March 2021",
+      "Panel_Label": "-X",
+      "ML_Status": "Anomaly",
+      "count": 130
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "11 March 2021",
+      "Panel_Label": "-X",
+      "ML_Status": "Normal",
+      "count": 950
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "11 March 2021",
+      "Panel_Label": "-Z",
+      "ML_Status": "Anomaly",
+      "count": 125
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "11 March 2021",
+      "Panel_Label": "-Z",
+      "ML_Status": "Normal",
+      "count": 955
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "13 Feb 2021",
+      "Panel_Label": "+X",
+      "ML_Status": "Anomaly",
+      "count": 98
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "13 Feb 2021",
+      "Panel_Label": "+X",
+      "ML_Status": "Normal",
+      "count": 981
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "13 Feb 2021",
+      "Panel_Label": "+Y",
+      "ML_Status": "Anomaly",
+      "count": 1079
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "13 Feb 2021",
+      "Panel_Label": "+Z",
+      "ML_Status": "Anomaly",
+      "count": 464
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "13 Feb 2021",
+      "Panel_Label": "+Z",
+      "ML_Status": "Normal",
+      "count": 615
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "13 Feb 2021",
+      "Panel_Label": "-X",
+      "ML_Status": "Anomaly",
+      "count": 150
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "13 Feb 2021",
+      "Panel_Label": "-X",
+      "ML_Status": "Normal",
+      "count": 929
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "13 Feb 2021",
+      "Panel_Label": "-Z",
+      "ML_Status": "Anomaly",
+      "count": 136
+    },
+    {
+      "Satellite_ID": "RAAVANA",
+      "Source_Sheet": "13 Feb 2021",
+      "Panel_Label": "-Z",
+      "ML_Status": "Normal",
+      "count": 943
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "Panel_Label": "+X",
+      "ML_Status": "Anomaly",
+      "count": 148
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "Panel_Label": "+X",
+      "ML_Status": "Normal",
+      "count": 953
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "Panel_Label": "+Y",
+      "ML_Status": "Anomaly",
+      "count": 657
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "Panel_Label": "+Y",
+      "ML_Status": "Normal",
+      "count": 444
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "Panel_Label": "+Z",
+      "ML_Status": "Anomaly",
+      "count": 221
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "Panel_Label": "+Z",
+      "ML_Status": "Normal",
+      "count": 880
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "Panel_Label": "-X",
+      "ML_Status": "Anomaly",
+      "count": 124
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "Panel_Label": "-X",
+      "ML_Status": "Normal",
+      "count": 977
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "Panel_Label": "-Z",
+      "ML_Status": "Anomaly",
+      "count": 77
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "Panel_Label": "-Z",
+      "ML_Status": "Normal",
+      "count": 1024
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "13 Feb 2021",
+      "Panel_Label": "+X",
+      "ML_Status": "Anomaly",
+      "count": 121
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "13 Feb 2021",
+      "Panel_Label": "+X",
+      "ML_Status": "Normal",
+      "count": 959
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "13 Feb 2021",
+      "Panel_Label": "+Y",
+      "ML_Status": "Anomaly",
+      "count": 650
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "13 Feb 2021",
+      "Panel_Label": "+Y",
+      "ML_Status": "Normal",
+      "count": 430
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "13 Feb 2021",
+      "Panel_Label": "+Z",
+      "ML_Status": "Anomaly",
+      "count": 318
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "13 Feb 2021",
+      "Panel_Label": "+Z",
+      "ML_Status": "Normal",
+      "count": 762
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "13 Feb 2021",
+      "Panel_Label": "-X",
+      "ML_Status": "Anomaly",
+      "count": 124
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "13 Feb 2021",
+      "Panel_Label": "-X",
+      "ML_Status": "Normal",
+      "count": 956
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "13 Feb 2021",
+      "Panel_Label": "-Z",
+      "ML_Status": "Anomaly",
+      "count": 78
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "13 Feb 2021",
+      "Panel_Label": "-Z",
+      "ML_Status": "Normal",
+      "count": 1002
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "23 October 2020",
+      "Panel_Label": "+X",
+      "ML_Status": "Anomaly",
+      "count": 106
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "23 October 2020",
+      "Panel_Label": "+X",
+      "ML_Status": "Normal",
+      "count": 973
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "23 October 2020",
+      "Panel_Label": "+Y",
+      "ML_Status": "Anomaly",
+      "count": 601
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "23 October 2020",
+      "Panel_Label": "+Y",
+      "ML_Status": "Normal",
+      "count": 478
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "23 October 2020",
+      "Panel_Label": "+Z",
+      "ML_Status": "Anomaly",
+      "count": 225
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "23 October 2020",
+      "Panel_Label": "+Z",
+      "ML_Status": "Normal",
+      "count": 854
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "23 October 2020",
+      "Panel_Label": "-X",
+      "ML_Status": "Anomaly",
+      "count": 77
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "23 October 2020",
+      "Panel_Label": "-X",
+      "ML_Status": "Normal",
+      "count": 1002
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "23 October 2020",
+      "Panel_Label": "-Z",
+      "ML_Status": "Anomaly",
+      "count": 98
+    },
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "23 October 2020",
+      "Panel_Label": "-Z",
+      "ML_Status": "Normal",
+      "count": 981
+    }
+  ],
+  "limitations": [
+    "Labels are derived from the published definitions (SRC-1 Eq.1 and Eq.2); they are not independent operator-verified ground truth.",
+    "Only five orbit-long sessions from two satellites are available; the held-out set is small and results are not a measure of operational performance.",
+    "Documented anomalies are concentrated on one panel per satellite (RAAVANA +Y: Type 1, UGUISU +Y: Type 2), so panel-level generalisation is untested.",
+    "The decision threshold (contamination) was selected by leave-one-session-out validation on training sessions only; with so few sessions this choice is noisy.",
+    "Isolation Forest flags a near-zero voltage only when the current also differs from the eclipse idle value (about 4.7 mA); a failed panel reading 0 mV with idle current is scored normal by the model and is caught only by the knowledge-based Type 1 rule.",
+    "The ML model scores each observation independently (log voltage and log current); sequence logic such as SRC-1 Eq.(2) is handled by the knowledge-based rules, not by the model."
+  ]
+}

@@ -1,0 +1,782 @@
+{
+  "schema_version": "1.0",
+  "description": "IF-THEN rules for forward chaining. Thresholds are not stored here: they live in faults.json (detection_parameters) with their source reference.",
+  "semantics": {
+    "value_fact": "A condition may compare a fact with another fact (value_fact) instead of a constant.",
+    "logic": "Each rule combines its conditions with 'logic' (AND/OR).",
+    "operators": [
+      ">",
+      ">=",
+      "<",
+      "<=",
+      "==",
+      "!=",
+      "is_true",
+      "is_false"
+    ],
+    "strata": "Rules are executed layer by layer (stratified forward chaining). Layer 1 derives observations, layer 2 combines evidence, layer 3 concludes. A derived fact that was not asserted is treated as false (closed world), which is why rules using 'is_false' sit in a higher layer than the rules producing that fact.",
+    "evidence_requirements": "Base facts that must be known. If one is missing the rule is reported as lacking evidence instead of silently failing.",
+    "strengthening_facts": "Derived facts that increase the evidence strength of a diagnosis rule (used by conflict resolution)."
+  },
+  "fact_definitions": {
+    "n_samples": {
+      "type": "int",
+      "kind": "base",
+      "description": "Number of observations of the panel in the window."
+    },
+    "v_below_threshold_count": {
+      "type": "int",
+      "kind": "base",
+      "description": "Samples with V < type-1 threshold (faults.json detection_parameters)."
+    },
+    "type2_match_count": {
+      "type": "int",
+      "kind": "base",
+      "description": "Samples satisfying Eq.(2) with verified neighbours."
+    },
+    "type2_unverifiable_count": {
+      "type": "int",
+      "kind": "base",
+      "description": "Samples with V in range and I below limit whose neighbours cannot be verified."
+    },
+    "ml_available": {
+      "type": "bool",
+      "kind": "base",
+      "description": "True when the ML detector scored at least one sample."
+    },
+    "type2_longest_run": {
+      "type": "int",
+      "kind": "base",
+      "description": "Longest run of consecutive samples that satisfy Eq.(2)."
+    },
+    "ml_anomaly_count": {
+      "type": "int",
+      "kind": "base",
+      "description": "Samples flagged by Isolation Forest."
+    },
+    "ml_anomaly_fraction": {
+      "type": "float",
+      "kind": "base",
+      "description": "Flagged share of the scored samples in the window."
+    },
+    "ml_expected_fraction": {
+      "type": "float",
+      "kind": "base",
+      "description": "Share the model flags on normal training data (its contamination setting)."
+    },
+    "ml_flagged_type1_samples": {
+      "type": "int",
+      "kind": "base",
+      "description": "Samples satisfying Eq.(1) that the ML detector also flagged."
+    },
+    "ml_flagged_type2_samples": {
+      "type": "int",
+      "kind": "base",
+      "description": "Samples satisfying Eq.(2) that the ML detector also flagged."
+    },
+    "ml_type1_flag_rate": {
+      "type": "float",
+      "kind": "base",
+      "description": "Flagged share of the samples satisfying Eq.(1) (0 when none)."
+    },
+    "ml_type2_flag_rate": {
+      "type": "float",
+      "kind": "base",
+      "description": "Flagged share of the samples satisfying Eq.(2) (0 when none)."
+    },
+    "type1_condition_present": {
+      "type": "bool",
+      "kind": "derived",
+      "description": "Asserted by R001."
+    },
+    "type2_condition_present": {
+      "type": "bool",
+      "kind": "derived",
+      "description": "Asserted by R002."
+    },
+    "type2_unverifiable": {
+      "type": "bool",
+      "kind": "derived",
+      "description": "Asserted by R003."
+    },
+    "ml_anomaly_present": {
+      "type": "bool",
+      "kind": "derived",
+      "description": "Asserted by R004."
+    },
+    "type1_ml_corroborated": {
+      "type": "bool",
+      "kind": "derived",
+      "description": "Asserted by R005."
+    },
+    "type2_ml_corroborated": {
+      "type": "bool",
+      "kind": "derived",
+      "description": "Asserted by R006."
+    },
+    "type2_minimal_pattern_only": {
+      "type": "bool",
+      "kind": "derived",
+      "description": "Asserted by R007."
+    },
+    "diagnosis_possible_solar_panel_failure": {
+      "type": "bool",
+      "kind": "derived",
+      "description": "Asserted by R010."
+    },
+    "diagnosis_possible_solar_cell_failure": {
+      "type": "bool",
+      "kind": "derived",
+      "description": "Asserted by R020."
+    },
+    "diagnosis_insufficient_evidence_type2_minimal": {
+      "type": "bool",
+      "kind": "derived",
+      "description": "Asserted by R031."
+    },
+    "diagnosis_anomalous_behaviour": {
+      "type": "bool",
+      "kind": "derived",
+      "description": "Asserted by R040."
+    },
+    "diagnosis_insufficient_evidence": {
+      "type": "bool",
+      "kind": "derived",
+      "description": "Asserted by R030."
+    },
+    "diagnosis_insufficient_evidence_ml": {
+      "type": "bool",
+      "kind": "derived",
+      "description": "Asserted by R051."
+    },
+    "diagnosis_normal": {
+      "type": "bool",
+      "kind": "derived",
+      "description": "Asserted by R050."
+    }
+  },
+  "rules": [
+    {
+      "rule_id": "R001",
+      "name": "Documented Type 1 condition: voltage below 1200 mV",
+      "layer": 1,
+      "conditions": [
+        {
+          "fact": "v_below_threshold_count",
+          "operator": ">",
+          "value": 0,
+          "description": "At least one sample has V < 1200 mV"
+        }
+      ],
+      "logic": "AND",
+      "conclusion": {
+        "fact": "type1_condition_present",
+        "value": true
+      },
+      "is_diagnosis": false,
+      "priority": 1,
+      "severity": "high",
+      "description": "Observation rule implementing SRC-1 Eq.(1).",
+      "evidence_requirements": [
+        "v_below_threshold_count"
+      ],
+      "source": {
+        "source_id": "SRC-1",
+        "section": "3.1.1",
+        "equation": "Eq.(1)"
+      },
+      "suggested_action": "Inspect the voltage telemetry of the panel.",
+      "related_fault_ids": [
+        "F001"
+      ],
+      "diagnosis": null,
+      "fault_id": null,
+      "strengthening_facts": [],
+      "status": "implemented",
+      "validation": "covered by automated tests (tests/test_inference_engine.py)"
+    },
+    {
+      "rule_id": "R002",
+      "name": "Documented Type 2 condition: 2000-3000 mV with current below 50 mA",
+      "layer": 1,
+      "conditions": [
+        {
+          "fact": "type2_match_count",
+          "operator": ">",
+          "value": 0,
+          "description": "At least one sample satisfies Eq.(2) including both neighbours"
+        }
+      ],
+      "logic": "AND",
+      "conclusion": {
+        "fact": "type2_condition_present",
+        "value": true
+      },
+      "is_diagnosis": false,
+      "priority": 2,
+      "severity": "medium",
+      "description": "Observation rule implementing SRC-1 Eq.(2): voltage within 2000-3000 mV at t-1, t and t+1 (contiguous samples) and current < 50 mA at t.",
+      "evidence_requirements": [
+        "type2_match_count"
+      ],
+      "source": {
+        "source_id": "SRC-1",
+        "section": "3.1.2",
+        "equation": "Eq.(2)"
+      },
+      "suggested_action": "Inspect voltage and current telemetry of the panel during illumination.",
+      "related_fault_ids": [
+        "F002"
+      ],
+      "diagnosis": null,
+      "fault_id": null,
+      "strengthening_facts": [],
+      "status": "implemented",
+      "validation": "covered by automated tests (tests/test_inference_engine.py)"
+    },
+    {
+      "rule_id": "R003",
+      "name": "Type 2 candidate cannot be verified",
+      "layer": 1,
+      "conditions": [
+        {
+          "fact": "type2_unverifiable_count",
+          "operator": ">",
+          "value": 0,
+          "description": "Sample has V in 2000-3000 mV and I < 50 mA but a neighbour is missing or not contiguous"
+        },
+        {
+          "fact": "type2_match_count",
+          "operator": "==",
+          "value": 0,
+          "description": "No fully verified Eq.(2) match"
+        }
+      ],
+      "logic": "AND",
+      "conclusion": {
+        "fact": "type2_unverifiable",
+        "value": true
+      },
+      "is_diagnosis": false,
+      "priority": 4,
+      "severity": "low",
+      "description": "SRC-1 Eq.(2) needs the previous and following sample. When they are unavailable the condition is reported as unverifiable instead of being simplified.",
+      "evidence_requirements": [
+        "type2_unverifiable_count",
+        "type2_match_count"
+      ],
+      "source": {
+        "source_id": "SRC-1",
+        "section": "3.1.2",
+        "equation": "Eq.(2)"
+      },
+      "suggested_action": "Provide a contiguous 5 s time series covering the samples around the candidate.",
+      "related_fault_ids": [
+        "F004"
+      ],
+      "diagnosis": null,
+      "fault_id": null,
+      "strengthening_facts": [],
+      "status": "implemented",
+      "validation": "covered by automated tests (tests/test_inference_engine.py)"
+    },
+    {
+      "rule_id": "R004",
+      "name": "ML anomaly rate above the model's expected false-alarm rate",
+      "layer": 1,
+      "conditions": [
+        {
+          "fact": "ml_anomaly_fraction",
+          "operator": ">",
+          "value_fact": "ml_expected_fraction",
+          "description": "Share of samples flagged by Isolation Forest exceeds the share it flags on normal training data"
+        }
+      ],
+      "logic": "AND",
+      "conclusion": {
+        "fact": "ml_anomaly_present",
+        "value": true
+      },
+      "is_diagnosis": false,
+      "priority": 3,
+      "severity": "medium",
+      "description": "Converts the ML result into a diagnostic fact. The comparison rate is the model's own contamination setting (expected flagged share on normal data), so a handful of routine false alarms does not make a panel anomalous.",
+      "evidence_requirements": [
+        "ml_available",
+        "ml_anomaly_fraction",
+        "ml_expected_fraction"
+      ],
+      "source": {
+        "source_id": "ORBITALIS design",
+        "section": "evidence combination (no physical threshold)"
+      },
+      "suggested_action": "Review the flagged samples.",
+      "related_fault_ids": [
+        "F003"
+      ],
+      "diagnosis": null,
+      "fault_id": null,
+      "strengthening_facts": [],
+      "status": "implemented",
+      "validation": "covered by automated tests (tests/test_inference_engine.py)"
+    },
+    {
+      "rule_id": "R005",
+      "name": "ML corroborates the Type 1 condition",
+      "layer": 2,
+      "conditions": [
+        {
+          "fact": "type1_condition_present",
+          "operator": "is_true",
+          "description": "Type 1 condition present"
+        },
+        {
+          "fact": "ml_type1_flag_rate",
+          "operator": ">",
+          "value_fact": "ml_expected_fraction",
+          "description": "ML flags the Type 1 samples more often than its expected false-alarm rate"
+        }
+      ],
+      "logic": "AND",
+      "conclusion": {
+        "fact": "type1_ml_corroborated",
+        "value": true
+      },
+      "is_diagnosis": false,
+      "priority": 1,
+      "severity": "high",
+      "description": "Independent agreement between the expert condition and the ML detector strengthens the evidence.",
+      "evidence_requirements": [
+        "ml_type1_flag_rate",
+        "ml_expected_fraction"
+      ],
+      "source": {
+        "source_id": "ORBITALIS design",
+        "section": "evidence combination (no physical threshold)"
+      },
+      "suggested_action": "-",
+      "related_fault_ids": [
+        "F001"
+      ],
+      "diagnosis": null,
+      "fault_id": null,
+      "strengthening_facts": [],
+      "status": "implemented",
+      "validation": "covered by automated tests (tests/test_inference_engine.py)"
+    },
+    {
+      "rule_id": "R006",
+      "name": "ML corroborates the Type 2 condition",
+      "layer": 2,
+      "conditions": [
+        {
+          "fact": "type2_condition_present",
+          "operator": "is_true",
+          "description": "Type 2 condition present"
+        },
+        {
+          "fact": "ml_type2_flag_rate",
+          "operator": ">",
+          "value_fact": "ml_expected_fraction",
+          "description": "ML flags the Type 2 samples more often than its expected false-alarm rate"
+        }
+      ],
+      "logic": "AND",
+      "conclusion": {
+        "fact": "type2_ml_corroborated",
+        "value": true
+      },
+      "is_diagnosis": false,
+      "priority": 2,
+      "severity": "medium",
+      "description": "Independent agreement between the expert condition and the ML detector strengthens the evidence.",
+      "evidence_requirements": [
+        "ml_type2_flag_rate",
+        "ml_expected_fraction"
+      ],
+      "source": {
+        "source_id": "ORBITALIS design",
+        "section": "evidence combination (no physical threshold)"
+      },
+      "suggested_action": "-",
+      "related_fault_ids": [
+        "F002"
+      ],
+      "diagnosis": null,
+      "fault_id": null,
+      "strengthening_facts": [],
+      "status": "implemented",
+      "validation": "covered by automated tests (tests/test_inference_engine.py)"
+    },
+    {
+      "rule_id": "R007",
+      "name": "Type 2 evidence limited to the minimum three-sample pattern",
+      "layer": 2,
+      "conditions": [
+        {
+          "fact": "type2_condition_present",
+          "operator": "is_true",
+          "description": "Type 2 condition present"
+        },
+        {
+          "fact": "type2_longest_run",
+          "operator": "<=",
+          "value": 1,
+          "description": "Longest run of matched samples is 1, i.e. only the minimum pattern of three consecutive in-range samples"
+        }
+      ],
+      "logic": "AND",
+      "conclusion": {
+        "fact": "type2_minimal_pattern_only",
+        "value": true
+      },
+      "is_diagnosis": false,
+      "priority": 2,
+      "severity": "low",
+      "description": "SRC-1 Section 3.1.2 requires at least three consecutive samples and warns that the same voltage/current pattern can occur instantly at eclipse entry/exit. Without illumination data a pattern that never exceeds the minimum cannot be separated from such a transition.",
+      "evidence_requirements": [
+        "type2_longest_run"
+      ],
+      "source": {
+        "source_id": "SRC-1",
+        "section": "3.1.2",
+        "equation": "Eq.(2)"
+      },
+      "suggested_action": "Check whether the pattern persists in other orbits.",
+      "related_fault_ids": [
+        "F004"
+      ],
+      "diagnosis": null,
+      "fault_id": null,
+      "strengthening_facts": [],
+      "status": "implemented",
+      "validation": "covered by automated tests (tests/test_inference_engine.py)"
+    },
+    {
+      "rule_id": "R010",
+      "name": "Possible solar panel failure (Type 1)",
+      "layer": 3,
+      "conditions": [
+        {
+          "fact": "type1_condition_present",
+          "operator": "is_true",
+          "description": "Documented Type 1 condition present"
+        }
+      ],
+      "logic": "AND",
+      "conclusion": {
+        "fact": "diagnosis_possible_solar_panel_failure",
+        "value": true
+      },
+      "is_diagnosis": true,
+      "diagnosis": "possible_solar_panel_failure",
+      "fault_id": "F001",
+      "priority": 1,
+      "severity": "high",
+      "description": "Research-supported diagnostic condition: voltage below 1200 mV (SRC-1 Eq.(1)). Reported as a possible fault because only telemetry is available.",
+      "evidence_requirements": [
+        "v_below_threshold_count"
+      ],
+      "strengthening_facts": [
+        "type1_ml_corroborated"
+      ],
+      "source": {
+        "source_id": "SRC-1",
+        "section": "3.1.1",
+        "equation": "Eq.(1)"
+      },
+      "suggested_action": "Inspect the relevant panel voltage telemetry and verify the panel operating conditions before concluding a hardware failure.",
+      "related_fault_ids": [
+        "F001"
+      ],
+      "status": "implemented",
+      "validation": "covered by automated tests (tests/test_inference_engine.py)"
+    },
+    {
+      "rule_id": "R020",
+      "name": "Possible solar cell failure (Type 2)",
+      "layer": 3,
+      "conditions": [
+        {
+          "fact": "type2_condition_present",
+          "operator": "is_true",
+          "description": "Documented Type 2 condition present"
+        },
+        {
+          "fact": "type2_minimal_pattern_only",
+          "operator": "is_false",
+          "description": "Pattern persists beyond the minimum three samples"
+        }
+      ],
+      "logic": "AND",
+      "conclusion": {
+        "fact": "diagnosis_possible_solar_cell_failure",
+        "value": true
+      },
+      "is_diagnosis": true,
+      "diagnosis": "possible_solar_cell_failure",
+      "fault_id": "F002",
+      "priority": 2,
+      "severity": "medium",
+      "description": "Research-supported diagnostic condition (SRC-1 Eq.(2)). Isolated matches may reflect eclipse transitions, the paper's reason for using neighbouring samples.",
+      "evidence_requirements": [
+        "type2_match_count"
+      ],
+      "strengthening_facts": [
+        "type2_ml_corroborated"
+      ],
+      "source": {
+        "source_id": "SRC-1",
+        "section": "3.1.2",
+        "equation": "Eq.(2)"
+      },
+      "suggested_action": "Inspect voltage and current of the panel while illuminated and check whether the condition persists across orbits.",
+      "related_fault_ids": [
+        "F002"
+      ],
+      "status": "implemented",
+      "validation": "covered by automated tests (tests/test_inference_engine.py)"
+    },
+    {
+      "rule_id": "R031",
+      "name": "Insufficient evidence: Type 2 pattern never exceeds the minimum",
+      "layer": 3,
+      "conditions": [
+        {
+          "fact": "type2_minimal_pattern_only",
+          "operator": "is_true",
+          "description": "Only the minimum Type 2 pattern was observed"
+        },
+        {
+          "fact": "type1_condition_present",
+          "operator": "is_false",
+          "description": "No Type 1 condition"
+        }
+      ],
+      "logic": "AND",
+      "conclusion": {
+        "fact": "diagnosis_insufficient_evidence_type2_minimal",
+        "value": true
+      },
+      "is_diagnosis": true,
+      "diagnosis": "insufficient_evidence",
+      "fault_id": "F004",
+      "priority": 3,
+      "severity": "low",
+      "description": "The Eq.(2) pattern occurs only in its minimum form. SRC-1 notes it can occur briefly at eclipse transitions; illumination data to rule that out is not in the dataset, so no fault is claimed.",
+      "evidence_requirements": [
+        "type2_longest_run"
+      ],
+      "strengthening_facts": [],
+      "source": {
+        "source_id": "SRC-1",
+        "section": "3.1.2",
+        "equation": "Eq.(2)"
+      },
+      "suggested_action": "Check whether the pattern persists across orbits or sessions before suspecting a cell failure.",
+      "related_fault_ids": [
+        "F004"
+      ],
+      "status": "implemented",
+      "validation": "covered by automated tests (tests/test_inference_engine.py)"
+    },
+    {
+      "rule_id": "R040",
+      "name": "Anomalous behaviour not explained by a documented condition",
+      "layer": 3,
+      "conditions": [
+        {
+          "fact": "ml_anomaly_present",
+          "operator": "is_true",
+          "description": "ML anomaly present"
+        },
+        {
+          "fact": "type1_condition_present",
+          "operator": "is_false",
+          "description": "No Type 1 condition"
+        },
+        {
+          "fact": "type2_condition_present",
+          "operator": "is_false",
+          "description": "No Type 2 condition"
+        }
+      ],
+      "logic": "AND",
+      "conclusion": {
+        "fact": "diagnosis_anomalous_behaviour",
+        "value": true
+      },
+      "is_diagnosis": true,
+      "diagnosis": "anomalous_behaviour",
+      "fault_id": "F003",
+      "priority": 3,
+      "severity": "medium",
+      "description": "Statistical anomaly without documented-condition support. Anomaly detection is not fault diagnosis.",
+      "evidence_requirements": [
+        "ml_available",
+        "ml_anomaly_count"
+      ],
+      "strengthening_facts": [],
+      "source": {
+        "source_id": "ORBITALIS design",
+        "section": "evidence combination (no physical threshold)"
+      },
+      "suggested_action": "Review the flagged samples and the operating conditions (eclipse/sunlight, attitude) before drawing conclusions.",
+      "related_fault_ids": [
+        "F003"
+      ],
+      "status": "implemented",
+      "validation": "covered by automated tests (tests/test_inference_engine.py)"
+    },
+    {
+      "rule_id": "R030",
+      "name": "Insufficient evidence: Type 2 candidate cannot be verified",
+      "layer": 3,
+      "conditions": [
+        {
+          "fact": "type2_unverifiable",
+          "operator": "is_true",
+          "description": "Unverifiable Type 2 candidate"
+        },
+        {
+          "fact": "type1_condition_present",
+          "operator": "is_false",
+          "description": "No Type 1 condition"
+        },
+        {
+          "fact": "type2_condition_present",
+          "operator": "is_false",
+          "description": "No verified Type 2 condition"
+        }
+      ],
+      "logic": "AND",
+      "conclusion": {
+        "fact": "diagnosis_insufficient_evidence",
+        "value": true
+      },
+      "is_diagnosis": true,
+      "diagnosis": "insufficient_evidence",
+      "fault_id": "F004",
+      "priority": 4,
+      "severity": "low",
+      "description": "The voltage/current pattern of SRC-1 Eq.(2) occurs but its consecutive-sample requirement cannot be verified.",
+      "evidence_requirements": [
+        "type2_unverifiable_count"
+      ],
+      "strengthening_facts": [],
+      "source": {
+        "source_id": "SRC-1",
+        "section": "3.1.2",
+        "equation": "Eq.(2)"
+      },
+      "suggested_action": "Provide a contiguous time series around the candidate samples.",
+      "related_fault_ids": [
+        "F004"
+      ],
+      "status": "implemented",
+      "validation": "covered by automated tests (tests/test_inference_engine.py)"
+    },
+    {
+      "rule_id": "R051",
+      "name": "Insufficient evidence: ML result unavailable",
+      "layer": 3,
+      "conditions": [
+        {
+          "fact": "ml_available",
+          "operator": "is_false",
+          "description": "No ML result"
+        },
+        {
+          "fact": "type1_condition_present",
+          "operator": "is_false",
+          "description": "No Type 1 condition"
+        },
+        {
+          "fact": "type2_condition_present",
+          "operator": "is_false",
+          "description": "No Type 2 condition"
+        }
+      ],
+      "logic": "AND",
+      "conclusion": {
+        "fact": "diagnosis_insufficient_evidence_ml",
+        "value": true
+      },
+      "is_diagnosis": true,
+      "diagnosis": "insufficient_evidence",
+      "fault_id": "F004",
+      "priority": 4,
+      "severity": "low",
+      "description": "Without an ML result, absence of a documented condition is not enough to call the panel normal.",
+      "evidence_requirements": [],
+      "strengthening_facts": [],
+      "source": {
+        "source_id": "ORBITALIS design",
+        "section": "evidence combination (no physical threshold)"
+      },
+      "suggested_action": "Run the anomaly detector.",
+      "related_fault_ids": [
+        "F004"
+      ],
+      "status": "implemented",
+      "validation": "covered by automated tests (tests/test_inference_engine.py)"
+    },
+    {
+      "rule_id": "R050",
+      "name": "Normal operation",
+      "layer": 3,
+      "conditions": [
+        {
+          "fact": "ml_available",
+          "operator": "is_true",
+          "description": "ML result available"
+        },
+        {
+          "fact": "ml_anomaly_present",
+          "operator": "is_false",
+          "description": "No ML anomaly"
+        },
+        {
+          "fact": "type1_condition_present",
+          "operator": "is_false",
+          "description": "No Type 1 condition"
+        },
+        {
+          "fact": "type2_condition_present",
+          "operator": "is_false",
+          "description": "No Type 2 condition"
+        },
+        {
+          "fact": "type2_unverifiable",
+          "operator": "is_false",
+          "description": "No unverifiable candidate"
+        }
+      ],
+      "logic": "AND",
+      "conclusion": {
+        "fact": "diagnosis_normal",
+        "value": true
+      },
+      "is_diagnosis": true,
+      "diagnosis": "normal",
+      "fault_id": "F005",
+      "priority": 5,
+      "severity": "none",
+      "description": "No documented condition and no ML anomaly.",
+      "evidence_requirements": [
+        "ml_available"
+      ],
+      "strengthening_facts": [],
+      "source": {
+        "source_id": "ORBITALIS design",
+        "section": "evidence combination (no physical threshold)"
+      },
+      "suggested_action": "No action required.",
+      "related_fault_ids": [
+        "F005"
+      ],
+      "status": "implemented",
+      "validation": "covered by automated tests (tests/test_inference_engine.py)"
+    }
+  ]
+}

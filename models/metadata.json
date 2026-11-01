@@ -1,0 +1,103 @@
+{
+  "created_utc": "2026-11-01T03:24:12+00:00",
+  "algorithm": "sklearn.ensemble.IsolationForest",
+  "n_estimators": 200,
+  "contamination": 0.15,
+  "random_state": 42,
+  "contamination_validation": [
+    {
+      "contamination": 0.01,
+      "mean_f1": 0.2280621152206315,
+      "fold_f1": [
+        0.0017873100983020554,
+        0.14430379746835442,
+        0.5380952380952381
+      ],
+      "folds": 3
+    },
+    {
+      "contamination": 0.02,
+      "mean_f1": 0.5741438116210708,
+      "fold_f1": [
+        0.003469210754553339,
+        0.8225806451612904,
+        0.8963815789473685
+      ],
+      "folds": 3
+    },
+    {
+      "contamination": 0.05,
+      "mean_f1": 0.5278416023636271,
+      "fold_f1": [
+        0.0026490066225165563,
+        0.7397260273972602,
+        0.8411497730711044
+      ],
+      "folds": 3
+    },
+    {
+      "contamination": 0.1,
+      "mean_f1": 0.5081748003583284,
+      "fold_f1": [
+        0.14359381197937326,
+        0.6574432761483121,
+        0.7234873129473
+      ],
+      "folds": 3
+    },
+    {
+      "contamination": 0.15,
+      "mean_f1": 0.6036080560538388,
+      "fold_f1": [
+        0.5960849186655638,
+        0.5789473684210527,
+        0.6357918810748999
+      ],
+      "folds": 3
+    },
+    {
+      "contamination": 0.2,
+      "mean_f1": 0.5456902971768699,
+      "fold_f1": [
+        0.5614126200986757,
+        0.5397546569741026,
+        0.5359036144578313
+      ],
+      "folds": 3
+    }
+  ],
+  "feature_selection": "Log-scaled voltage and current. Temperature and 3-sample rolling features were tried in leave-one-session-out validation and reduced F1; temperature is also excluded by SRC-1 Section 2.4.",
+  "features": [
+    "Log_Voltage",
+    "Log_Current"
+  ],
+  "target": "documented-condition label (SRC-1 Eq.1/Eq.2), anomaly = positive class",
+  "training_sessions": [
+    {
+      "satellite": "RAAVANA",
+      "session": "13 Feb 2021"
+    },
+    {
+      "satellite": "UGUISU",
+      "session": "23 October 2020"
+    },
+    {
+      "satellite": "UGUISU",
+      "session": "13 Feb 2021"
+    }
+  ],
+  "test_sessions": [
+    {
+      "satellite": "RAAVANA",
+      "session": "11 March 2021"
+    },
+    {
+      "satellite": "UGUISU",
+      "session": "10 April 2021"
+    }
+  ],
+  "n_training_observations": 13959,
+  "fit_on": "observations without a documented condition (normal only)",
+  "prediction_convention": "Isolation Forest -1 -> Anomaly, 1 -> Normal",
+  "imputation": "None. Observations lacking voltage or current are not scored."
+}

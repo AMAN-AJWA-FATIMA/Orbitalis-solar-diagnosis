@@ -1,0 +1,194 @@
+{
+  "schema_version": "1.0",
+  "description": "Fault, anomaly and status categories used by the ORBITALIS diagnostic rules.",
+  "diagnosis_statuses": {
+    "normal": {
+      "label": "Normal",
+      "description": "No documented condition matched and no ML anomaly was found."
+    },
+    "anomalous_behaviour": {
+      "label": "Anomalous behaviour",
+      "description": "The ML model flagged unusual behaviour that no documented fault condition explains. This is not a physical fault diagnosis."
+    },
+    "possible_documented_fault": {
+      "label": "Possible documented fault",
+      "description": "A published failure condition from the research was satisfied. It is a possible fault, not a confirmed one."
+    },
+    "insufficient_evidence": {
+      "label": "Insufficient evidence",
+      "description": "Required evidence is missing or cannot be verified, so no fault is claimed."
+    },
+    "conflicting_evidence": {
+      "label": "Conflicting diagnostic evidence",
+      "description": "More than one different documented fault condition matched; all are retained and the highest-ranked is shown first."
+    }
+  },
+  "detection_parameters": {
+    "type1_solar_panel_failure": {
+      "voltage_below_mv": 1200,
+      "source_ref": "SRC-1:3.1.1 Eq.(1)",
+      "definition": "V_i(t) < 1200 mV on one or more panels at any observation time"
+    },
+    "type2_solar_cell_failure": {
+      "voltage_min_mv": 2000,
+      "voltage_max_mv": 3000,
+      "current_below_ma": 50,
+      "consecutive_samples_required": 3,
+      "neighbour_offsets": [
+        -1,
+        0,
+        1
+      ],
+      "expected_sampling_interval_s": 5,
+      "source_ref": "SRC-1:3.1.2 Eq.(2)",
+      "definition": "2000 mV <= V_i(t-1), V_i(t), V_i(t+1) <= 3000 mV AND I_i(t) < 50 mA"
+    }
+  },
+  "faults": [
+    {
+      "fault_id": "F001",
+      "name": "Solar panel failure (Type 1)",
+      "conclusion": "possible_solar_panel_failure",
+      "category": "documented_fault",
+      "diagnosis_status": "possible_documented_fault",
+      "related_components": [
+        "C-SP-PY",
+        "C-SP-PX",
+        "C-SP-MZ",
+        "C-SP-MX",
+        "C-SP-PZ"
+      ],
+      "description": "Voltage reads below the expected threshold of 1200 mV. A panel of two series cells that is merely not illuminated still reads 1200-1500 mV, so lower values indicate a bad voltage condition (more than one cell).",
+      "telemetry_parameters": [
+        "voltage"
+      ],
+      "characteristics": [
+        "voltage < 1200 mV",
+        "may persist for the whole orbit (panel produces no usable voltage)"
+      ],
+      "dataset_compatibility": "Applicable to every session: needs only the voltage column.",
+      "severity": "high",
+      "severity_basis": "ORBITALIS classification: affects a whole panel (more than one cell, SRC-1 Section 3.1). Severity is not a value defined by the paper.",
+      "references": [
+        "SRC-1:3.1.1"
+      ]
+    },
+    {
+      "fault_id": "F002",
+      "name": "Solar cell failure (Type 2)",
+      "conclusion": "possible_solar_cell_failure",
+      "category": "documented_fault",
+      "diagnosis_status": "possible_documented_fault",
+      "related_components": [
+        "C-SP-PY",
+        "C-SP-PX",
+        "C-SP-MZ",
+        "C-SP-MX",
+        "C-SP-PZ"
+      ],
+      "description": "One compromised cell of a panel: voltage stays in 2000-3000 mV for consecutive samples while the current is below 50 mA. Only noticeable while the panel is illuminated; the same pattern can occur briefly at eclipse transitions, which is why neighbouring samples are required.",
+      "telemetry_parameters": [
+        "voltage",
+        "current"
+      ],
+      "characteristics": [
+        "2000-3000 mV on samples t-1, t, t+1",
+        "current < 50 mA at t",
+        "requires consecutive 5 s samples"
+      ],
+      "dataset_compatibility": "Needs voltage and current columns plus a contiguous time series (5 s). Without verifiable neighbours the system reports insufficient evidence.",
+      "severity": "medium",
+      "severity_basis": "ORBITALIS classification: one cell of a panel is affected (SRC-1 Section 3.1.2). Severity is not a value defined by the paper.",
+      "references": [
+        "SRC-1:3.1.2"
+      ]
+    },
+    {
+      "fault_id": "F003",
+      "name": "Unexplained anomalous behaviour",
+      "conclusion": "anomalous_behaviour",
+      "category": "anomaly",
+      "diagnosis_status": "anomalous_behaviour",
+      "related_components": [
+        "C-SP-PY",
+        "C-SP-PX",
+        "C-SP-MZ",
+        "C-SP-MX",
+        "C-SP-PZ"
+      ],
+      "description": "Isolation Forest flagged unusual telemetry but no documented fault condition matched. Possible causes include unmodelled operating conditions; no fault is claimed.",
+      "telemetry_parameters": [
+        "voltage",
+        "current",
+        "temperature"
+      ],
+      "characteristics": [
+        "ML anomaly without a matching documented condition"
+      ],
+      "dataset_compatibility": "Applicable wherever the ML detector can score samples.",
+      "severity": "medium",
+      "severity_basis": "ORBITALIS design: needs review, evidence is statistical only.",
+      "references": [
+        "ORBITALIS design"
+      ]
+    },
+    {
+      "fault_id": "F004",
+      "name": "Insufficient evidence",
+      "conclusion": "insufficient_evidence",
+      "category": "status",
+      "diagnosis_status": "insufficient_evidence",
+      "related_components": [
+        "C-SP-PY",
+        "C-SP-PX",
+        "C-SP-MZ",
+        "C-SP-MX",
+        "C-SP-PZ"
+      ],
+      "description": "A documented condition may be present but the evidence needed to verify it (for example contiguous neighbouring samples) is missing, or the ML result is unavailable.",
+      "telemetry_parameters": [
+        "voltage",
+        "current"
+      ],
+      "characteristics": [
+        "condition candidate without verifiable neighbours",
+        "or ML unavailable"
+      ],
+      "dataset_compatibility": "Applicable to every session.",
+      "severity": "low",
+      "severity_basis": "ORBITALIS design.",
+      "references": [
+        "SRC-1:3.1.2"
+      ]
+    },
+    {
+      "fault_id": "F005",
+      "name": "Normal operation",
+      "conclusion": "normal",
+      "category": "status",
+      "diagnosis_status": "normal",
+      "related_components": [
+        "C-SP-PY",
+        "C-SP-PX",
+        "C-SP-MZ",
+        "C-SP-MX",
+        "C-SP-PZ"
+      ],
+      "description": "No documented condition matched and the ML detector found no anomaly.",
+      "telemetry_parameters": [
+        "voltage",
+        "current",
+        "temperature"
+      ],
+      "characteristics": [
+        "no condition matched"
+      ],
+      "dataset_compatibility": "Applicable to every session.",
+      "severity": "none",
+      "severity_basis": "-",
+      "references": [
+        "ORBITALIS design"
+      ]
+    }
+  ]
+}

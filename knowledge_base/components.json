@@ -1,0 +1,259 @@
+{
+  "schema_version": "1.0",
+  "description": "Solar-panel components, sensors and measurements relevant to ORBITALIS (battery subsystem excluded).",
+  "sources": [
+    {
+      "source_id": "SRC-1",
+      "citation": "Jara Cespedes, A.J.; Pangestu, B.H.B.; Hanazawa, A.; Cho, M. Performance Evaluation of Machine Learning Methods for Anomaly Detection in CubeSat Solar Panels. Applied Sciences 2022, 12(17), 8634.",
+      "doi": "10.3390/app12178634",
+      "url": "https://www.mdpi.com/2076-3417/12/17/8634",
+      "sections_used": {
+        "2.1": "BIRDS bus, five solar panels, two cells in series",
+        "2.2": "Dataset overview, sensors (Table 1), sampling rate 5 s for RAAVANA/UGUISU/NEPALISAT",
+        "2.3": "Orbit/attitude effects (eclipse, rotation) on panel readings",
+        "3.1.1": "Type 1 anomaly: solar panel failure, Eq. (1)",
+        "3.1.2": "Type 2 anomaly: solar cell failure, Eq. (2)"
+      },
+      "verified": "Full text read during ORBITALIS development; definitions transcribed exactly."
+    },
+    {
+      "source_id": "SRC-2",
+      "citation": "BIRDS Satellite Electrical Power System Dataset (BIRDS Open Source).",
+      "url": "https://github.com/BIRDSOpenSource/EPS_dataset",
+      "sections_used": {
+        "workbooks": "RAAVANA.xlsx and UGUISU.xlsx column names and values (inspected locally)"
+      },
+      "verified": "Used as the data source only. No threshold is taken from this reference."
+    }
+  ],
+  "components": [
+    {
+      "component_id": "C-SP-PY",
+      "type": "solar_panel",
+      "name": "+Y solar panel",
+      "panel_code": "py",
+      "orientation": "+Y",
+      "description": "Solar panel on the +Y side of the CubeSat. Two solar cells connected in series (SRC-1 Section 2.1).",
+      "measurements": {
+        "voltage": {
+          "column": "Vpy (mV)",
+          "unit": "mV"
+        },
+        "current": {
+          "column": "Ipy (mA)",
+          "unit": "mA"
+        },
+        "temperature": {
+          "column": "Tpy (°C)",
+          "unit": "°C"
+        }
+      },
+      "source_refs": [
+        "SRC-1:2.1",
+        "SRC-1:2.2"
+      ]
+    },
+    {
+      "component_id": "C-SP-PX",
+      "type": "solar_panel",
+      "name": "+X solar panel",
+      "panel_code": "px",
+      "orientation": "+X",
+      "description": "Solar panel on the +X side of the CubeSat. Two solar cells connected in series (SRC-1 Section 2.1).",
+      "measurements": {
+        "voltage": {
+          "column": "Vpx (mV)",
+          "unit": "mV"
+        },
+        "current": {
+          "column": "Ipx (mA)",
+          "unit": "mA"
+        },
+        "temperature": {
+          "column": "Tpx (°C)",
+          "unit": "°C"
+        }
+      },
+      "source_refs": [
+        "SRC-1:2.1",
+        "SRC-1:2.2"
+      ]
+    },
+    {
+      "component_id": "C-SP-MZ",
+      "type": "solar_panel",
+      "name": "-Z solar panel",
+      "panel_code": "mz",
+      "orientation": "-Z",
+      "description": "Solar panel on the -Z side of the CubeSat. Two solar cells connected in series (SRC-1 Section 2.1).",
+      "measurements": {
+        "voltage": {
+          "column": "Vmz (mV)",
+          "unit": "mV"
+        },
+        "current": {
+          "column": "Imz (mA)",
+          "unit": "mA"
+        },
+        "temperature": {
+          "column": "Tmz (°C)",
+          "unit": "°C"
+        }
+      },
+      "source_refs": [
+        "SRC-1:2.1",
+        "SRC-1:2.2"
+      ]
+    },
+    {
+      "component_id": "C-SP-MX",
+      "type": "solar_panel",
+      "name": "-X solar panel",
+      "panel_code": "mx",
+      "orientation": "-X",
+      "description": "Solar panel on the -X side of the CubeSat. Two solar cells connected in series (SRC-1 Section 2.1).",
+      "measurements": {
+        "voltage": {
+          "column": "Vmx (mV)",
+          "unit": "mV"
+        },
+        "current": {
+          "column": "Imx (mA)",
+          "unit": "mA"
+        },
+        "temperature": {
+          "column": "Tmx (°C)",
+          "unit": "°C"
+        }
+      },
+      "source_refs": [
+        "SRC-1:2.1",
+        "SRC-1:2.2"
+      ]
+    },
+    {
+      "component_id": "C-SP-PZ",
+      "type": "solar_panel",
+      "name": "+Z solar panel",
+      "panel_code": "pz",
+      "orientation": "+Z",
+      "description": "Solar panel on the +Z side of the CubeSat. Two solar cells connected in series (SRC-1 Section 2.1).",
+      "measurements": {
+        "voltage": {
+          "column": "Vpz (mV)",
+          "unit": "mV"
+        },
+        "current": {
+          "column": "Ipz (mA)",
+          "unit": "mA"
+        },
+        "temperature": {
+          "column": "Tpz (°C)",
+          "unit": "°C"
+        }
+      },
+      "source_refs": [
+        "SRC-1:2.1",
+        "SRC-1:2.2"
+      ]
+    }
+  ],
+  "sensors": [
+    {
+      "sensor_id": "S-LMP8640",
+      "part": "LMP8640",
+      "measures": "current",
+      "unit": "mA",
+      "resolution": "8 bits",
+      "source_ref": "SRC-1:Table 1"
+    },
+    {
+      "sensor_id": "S-AD7490",
+      "part": "AD7490",
+      "measures": "voltage",
+      "unit": "mV",
+      "resolution": "12 bits",
+      "source_ref": "SRC-1:Table 1"
+    },
+    {
+      "sensor_id": "S-LMT84",
+      "part": "LMT84",
+      "measures": "temperature",
+      "unit": "°C",
+      "resolution": "12 bits",
+      "source_ref": "SRC-1:Table 1"
+    }
+  ],
+  "measurements": [
+    {
+      "measurement_id": "M-VOLTAGE",
+      "name": "Panel voltage",
+      "unit": "mV",
+      "sensor_id": "S-AD7490",
+      "description": "Output voltage of a panel. SRC-1 Section 3.1.1: the lowest expected reading of a non-illuminated panel lies within 1200-1500 mV (residual voltage of the ADC circuit)."
+    },
+    {
+      "measurement_id": "M-CURRENT",
+      "name": "Panel current",
+      "unit": "mA",
+      "sensor_id": "S-LMP8640",
+      "description": "Output current of a panel. Significant current flows only after a potential difference to the DC/DC converter input is reached (SRC-1 Section 2.4)."
+    },
+    {
+      "measurement_id": "M-TEMPERATURE",
+      "name": "Panel temperature",
+      "unit": "°C",
+      "sensor_id": "S-LMT84",
+      "description": "Temperature behind the panel. It lags voltage/current when entering or leaving eclipse, so SRC-1 did not use it for labelling; ORBITALIS shows it as context and as an ML feature only."
+    }
+  ],
+  "dataset_metadata": {
+    "dataset": "BIRDS EPS solar-panel telemetry (high sampling sensor data collection, one orbit per worksheet)",
+    "satellites_in_project": [
+      "RAAVANA",
+      "UGUISU"
+    ],
+    "sampling_interval_s": 5,
+    "sampling_interval_source": "SRC-1:2.2 (verified against the 'Time Stamp' column of every worksheet)",
+    "sessions": [
+      {
+        "satellite": "RAAVANA",
+        "session": "13 Feb 2021",
+        "samples": 1079
+      },
+      {
+        "satellite": "RAAVANA",
+        "session": "11 March 2021",
+        "samples": 1080
+      },
+      {
+        "satellite": "UGUISU",
+        "session": "23 October 2020",
+        "samples": 1079
+      },
+      {
+        "satellite": "UGUISU",
+        "session": "13 Feb 2021",
+        "samples": 1080
+      },
+      {
+        "satellite": "UGUISU",
+        "session": "10 April 2021",
+        "samples": 1101
+      }
+    ],
+    "time_column": "Time Stamp (elapsed seconds within the session)",
+    "labels_available": false,
+    "label_note": "The workbooks contain no label column. Documented failure conditions are derived from SRC-1 Eq.(1) and Eq.(2).",
+    "excluded_columns": [
+      "Vbat",
+      "Ibatt",
+      "Tbatt (battery subsystem - out of scope)",
+      "all '(raw)' hexadecimal columns (calibrated values are used)"
+    ]
+  },
+  "operating_context": {
+    "description": "Satellites have no attitude control and rotate freely (about 3 deg/s per axis, SRC-1 Section 2.3); illumination of each panel therefore changes continuously and eclipse alternates with sunlight. A low voltage on a single sample is not by itself a fault.",
+    "source_ref": "SRC-1:2.3"
+  }
+}

@@ -1,0 +1,158 @@
+{
+  "rows_input": 5429,
+  "invalid_numeric_values_coerced_to_nan": {},
+  "rows_quarantined_missing_timestamp": 10,
+  "quarantined_by_session": [
+    {
+      "Satellite_ID": "UGUISU",
+      "Source_Sheet": "10 April 2021",
+      "rows": 10
+    }
+  ],
+  "duplicate_observations_removed": 0,
+  "sampling_check": [
+    {
+      "satellite": "RAAVANA",
+      "session": "13 Feb 2021",
+      "samples": 1079,
+      "median_interval_s": 5.0,
+      "irregular_intervals": 0
+    },
+    {
+      "satellite": "RAAVANA",
+      "session": "11 March 2021",
+      "samples": 1080,
+      "median_interval_s": 5.0,
+      "irregular_intervals": 0
+    },
+    {
+      "satellite": "UGUISU",
+      "session": "23 October 2020",
+      "samples": 1079,
+      "median_interval_s": 5.0,
+      "irregular_intervals": 0
+    },
+    {
+      "satellite": "UGUISU",
+      "session": "13 Feb 2021",
+      "samples": 1080,
+      "median_interval_s": 5.0,
+      "irregular_intervals": 0
+    },
+    {
+      "satellite": "UGUISU",
+      "session": "10 April 2021",
+      "samples": 1101,
+      "median_interval_s": 5.0,
+      "irregular_intervals": 0
+    }
+  ],
+  "expected_interval_s": 5.0,
+  "missing_values_per_sensor_column": {},
+  "rows_output": 5419,
+  "inventory": [
+    {
+      "file": "RAAVANA.xlsx",
+      "sheet": "13 Feb 2021",
+      "rows": 1079,
+      "columns_total": 37,
+      "solar_columns_found": 15,
+      "solar_columns_missing": [],
+      "battery_columns_excluded": [
+        "Vbat (raw)",
+        "Vbat (V)",
+        "Ibatt(raw)",
+        "Ibatt(mA)",
+        "Tbatt raw)",
+        "Tbatt (\u2103)"
+      ],
+      "has_time_stamp": true
+    },
+    {
+      "file": "RAAVANA.xlsx",
+      "sheet": "11 March 2021",
+      "rows": 1080,
+      "columns_total": 37,
+      "solar_columns_found": 15,
+      "solar_columns_missing": [],
+      "battery_columns_excluded": [
+        "Vbat (raw)",
+        "Vbat (V)",
+        "Ibatt(raw)",
+        "Ibatt(mA)",
+        "Tbatt raw)",
+        "Tbatt (\u2103)"
+      ],
+      "has_time_stamp": true
+    },
+    {
+      "file": "UGUISU.xlsx",
+      "sheet": "23 October 2020",
+      "rows": 1079,
+      "columns_total": 37,
+      "solar_columns_found": 15,
+      "solar_columns_missing": [],
+      "battery_columns_excluded": [
+        "Vbat (raw)",
+        "Vbat (V)",
+        "Ibatt(raw)",
+        "Ibatt(mA)",
+        "Tbatt raw)",
+        "Tbatt (\u2103)"
+      ],
+      "has_time_stamp": true
+    },
+    {
+      "file": "UGUISU.xlsx",
+      "sheet": "13 Feb 2021",
+      "rows": 1080,
+      "columns_total": 37,
+      "solar_columns_found": 15,
+      "solar_columns_missing": [],
+      "battery_columns_excluded": [
+        "Vbat (raw)",
+        "Vbat (V)",
+        "Ibatt(raw)",
+        "Ibatt(mA)",
+        "Tbatt raw)",
+        "Tbatt (\u2103)"
+      ],
+      "has_time_stamp": true
+    },
+    {
+      "file": "UGUISU.xlsx",
+      "sheet": "10 April 2021",
+      "rows": 1111,
+      "columns_total": 37,
+      "solar_columns_found": 15,
+      "solar_columns_missing": [],
+      "battery_columns_excluded": [
+        "Vbat (raw)",
+        "Vbat (V)",
+        "Ibatt(raw)",
+        "Ibatt(mA)",
+        "Tbatt raw)",
+        "Tbatt (\u2103)"
+      ],
+      "has_time_stamp": true
+    }
+  ],
+  "features_used": [
+    "Tpy (\u00b0C)",
+    "Tpx (\u00b0C)",
+    "Tmz (\u00b0C)",
+    "Tmx (\u00b0C)",
+    "Tpz (\u00b0C)",
+    "Vpy (mV)",
+    "Vpx (mV)",
+    "Vmz (mV)",
+    "Vmx (mV)",
+    "Vpz (mV)",
+    "Ipy (mA)",
+    "Ipx (mA)",
+    "Imz (mA)",
+    "Imx (mA)",
+    "Ipz (mA)"
+  ],
+  "note": "Battery columns (Vbat, Ibatt, Tbatt) are excluded by design. Missing values are preserved (no imputation). Datetime = session date + elapsed seconds; the clock time of day at which each high-sampling session started is not part of the dataset."
+}
