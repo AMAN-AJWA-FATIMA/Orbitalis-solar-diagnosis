@@ -1,155 +1,647 @@
-"""Dynamic knowledge graph (NetworkX) built from the knowledge base and the
-actual diagnosis evidence.
 
-Node layers (left to right):
-0 Solar panel -> 1 Sensor measurement -> 2 Observed condition / ML anomaly ->
-3 Diagnostic rule -> 4 Possible fault / status -> 5 Suggested inspection action.
+"""Dynamic knowledge graph for ORBITALIS.
 
-Node ids are deterministic so nothing is duplicated: rules, faults and actions
-are shared between panels, panel-specific nodes carry the satellite/session/panel
-in their id.
+Graph layers:
+    0. Solar panel
+    1. Sensor measurement
+    2. Observed condition / ML anomaly
+    3. Diagnostic rule
+    4. Possible fault / status
+    5. Suggested inspection action
+
+Design principles:
+    - Deterministic node IDs prevent duplicate entities.
+    - Evidence nodes are specific to satellite/session/panel.
+    - Rules, faults, and actions are shared across panels.
+    - Multiple distinct actions for the same fault are preserved.
+    - Graph construction is separated from evidence interpretation.
+    - Primary diagnosis paths can be highlighted independently.
 """
+
 from __future__ import annotations
 
-from typing import Iterable
+import re
+from typing import Any, Iterable
 
 import networkx as nx
 
 from .knowledge_base import KnowledgeBase
 
+
+# ---------------------------------------------------------------------
+# Graph configuration
+# ---------------------------------------------------------------------
+
 NODE_TYPES = {
-    "solar_panel": "Solar panel", "measurement": "Sensor measurement", "condition": "Observed condition",
-    "anomaly": "ML anomaly", "rule": "Diagnostic rule", "fault": "Possible fault / status", "action": "Inspection action",
-}
-LAYER = {"solar_panel": 0, "measurement": 1, "condition": 2, "anomaly": 2, "rule": 3, "fault": 4, "action": 5}
-
-# Which measurement feeds which observed condition (from the rule definitions).
-_CONDITION_FACTS = {
-    "type1_condition_present": ("voltage", "Voltage < 1200 mV"),
-    "type2_condition_present": ("voltage_current", "V 2000-3000 mV with I < 50 mA"),
-    "type2_unverifiable": ("voltage_current", "Type 2 candidate (unverifiable)"),
-    "type2_minimal_pattern_only": ("voltage_current", "Type 2 minimum pattern only"),
+    "solar_panel": "Solar panel",
+    "measurement": "Sensor measurement",
+    "condition": "Observed condition",
+    "anomaly": "ML anomaly",
+    "rule": "Diagnostic rule",
+    "fault": "Possible fault / status",
+    "action": "Inspection action",
 }
 
+LAYER = {
+    "solar_panel": 0,
+    "measurement": 1,
+    "condition": 2,
+    "anomaly": 2,
+    "rule": 3,
+    "fault": 4,
+    "action": 5,
+}
 
-def _add(G: nx.DiGraph, node_id: str, ntype: str, label: str, **attrs) -> None:
-    if node_id not in G:
-        G.add_node(node_id, ntype=ntype, label=label, layer=LAYER[ntype], on_path=False, **attrs)
+MEASUREMENTS = {
+    "voltage": "Voltage (mV)",
+    "current": "Current (mA)",
+}
+
+# Each entry defines:
+# fact name -> (required measurements, human-readable description, count field)
+CONDITION_DEFINITIONS = {
+    "type1_condition_present": {
+        "measurements": ("voltage",),
+        "label": "Voltage below 1200 mV",
+        "count_field": "v_below_threshold_count",
+        "count_label": "samples",
+    },
+    "type2_condition_present": {
+        "measurements": ("voltage", "current"),
+        "label": "Voltage 2000–3000 mV with current below 50 mA",
+        "count_field": "type2_match_count",
+        "count_label": "matches",
+    },
+    "type2_unverifiable": {
+        "measurements": ("voltage", "current"),
+        "label": "Type 2 candidate (unverifiable)",
+        "count_field": "type2_unverifiable_count",
+        "count_label": "candidates",
+    },
+    "type2_minimal_pattern_only": {
+        "measurements": ("voltage", "current"),
+        "label": "Type 2 minimum pattern only",
+        "count_field": "type2_longest_run",
+        "count_label": "longest run",
+    },
+}
 
 
-def _edge(G: nx.DiGraph, a: str, b: str, label: str) -> None:
-    if not G.has_edge(a, b):
-        G.add_edge(a, b, label=label, on_path=False)
+# ---------------------------------------------------------------------
+# Deterministic identifiers
+# ---------------------------------------------------------------------
 
+def _panel_key(satellite: str, session: str, panel: str) -> str:
+    """Create a stable identifier for a panel within a dataset session."""
+    return f"{satellite}:{session}:{panel}"
+
+
+def _panel_node_id(key: str) -> str:
+    return f"panel:{key}"
+
+
+def _measurement_node_id(key: str, measurement: str) -> str:
+    return f"measurement:{key}:{measurement}"
+
+
+def _condition_node_id(key: str, fact: str) -> str:
+    return f"condition:{key}:{fact}"
+
+
+def _anomaly_node_id(key: str) -> str:
+    return f"anomaly:{key}"
+
+
+def _rule_node_id(rule_id: str) -> str:
+    return f"rule:{rule_id}"
+
+
+def _fault_node_id(fault_id: str) -> str:
+    return f"fault:{fault_id}"
+
+
+def _slug(value: str) -> str:
+    """Convert an action description into a stable ID-safe suffix."""
+    value = re.sub(r"[^a-zA-Z0-9]+", "-", value.strip().lower())
+    return value.strip("-") or "inspection"
+
+
+def _action_node_id(fault_id: str, action: str) -> str:
+    """Allow different actions for one fault without duplicating shared actions."""
+    return f"action:{fault_id}:{_slug(action)}"
+
+
+# ---------------------------------------------------------------------
+# Generic graph operations
+# ---------------------------------------------------------------------
+
+def _add_node(
+    graph: nx.DiGraph,
+    node_id: str,
+    node_type: str,
+    label: str,
+    **attributes: Any,
+) -> None:
+    """Add or update a graph node using consistent metadata."""
+    graph.add_node(
+        node_id,
+        ntype=node_type,
+        label=label,
+        layer=LAYER[node_type],
+        on_path=False,
+        **attributes,
+    )
+
+
+def _add_edge(
+    graph: nx.DiGraph,
+    source: str,
+    target: str,
+    label: str,
+) -> None:
+    """Add a directed relationship without duplicating an existing edge."""
+    if not graph.has_edge(source, target):
+        graph.add_edge(
+            source,
+            target,
+            label=label,
+            on_path=False,
+        )
+
+
+def _initialise_graph(graph: nx.DiGraph) -> None:
+    """Attach graph-level metadata."""
+    graph.graph.update(
+        {
+            "name": "ORBITALIS Knowledge Graph",
+            "description": "Satellite solar panel fault diagnosis and evidence graph",
+            "layers": dict(LAYER),
+        }
+    )
+
+
+# ---------------------------------------------------------------------
+# Knowledge-base graph
+# ---------------------------------------------------------------------
 
 def knowledge_structure_graph(kb: KnowledgeBase) -> nx.DiGraph:
-    """Static view of the knowledge base (rules -> faults -> actions)."""
-    G = nx.DiGraph()
+    """Build a static graph containing diagnosis rules, faults, and actions."""
+    graph = nx.DiGraph()
+    _initialise_graph(graph)
+
+    # Faults and their default inspection actions.
     for fault in kb.fault_list:
-        _add(G, f"fault:{fault['fault_id']}", "fault", fault["name"], fault_id=fault["fault_id"])
-        _add(G, f"action:{fault['fault_id']}", "action", "Inspection action")
-        _edge(G, f"fault:{fault['fault_id']}", f"action:{fault['fault_id']}", "recommends")
+        fault_id = fault["fault_id"]
+        fault_node = _fault_node_id(fault_id)
+
+        _add_node(
+            graph,
+            fault_node,
+            "fault",
+            fault["name"],
+            fault_id=fault_id,
+        )
+
+        action = fault.get("suggested_action", "Inspect the affected solar panel")
+        action_node = _action_node_id(fault_id, action)
+
+        _add_node(
+            graph,
+            action_node,
+            "action",
+            action,
+            fault_id=fault_id,
+        )
+
+        _add_edge(graph, fault_node, action_node, "recommends")
+
+    # Diagnosis rules and their conclusions.
     for rule in kb.rule_list:
         if not rule.get("is_diagnosis"):
             continue
-        _add(G, f"rule:{rule['rule_id']}", "rule", f"{rule['rule_id']} {rule['name']}")
-        _edge(G, f"rule:{rule['rule_id']}", f"fault:{rule['fault_id']}", "concludes")
-    return G
 
+        rule_id = rule["rule_id"]
+        fault_id = rule.get("fault_id")
+
+        _add_node(
+            graph,
+            _rule_node_id(rule_id),
+            "rule",
+            f"{rule_id} — {rule['name']}",
+            rule_id=rule_id,
+        )
+
+        if fault_id and fault_id in {
+            fault["fault_id"] for fault in kb.fault_list
+        }:
+            _add_edge(
+                graph,
+                _rule_node_id(rule_id),
+                _fault_node_id(fault_id),
+                "concludes",
+            )
+
+    return graph
+
+
+# ---------------------------------------------------------------------
+# Evidence-node construction
+# ---------------------------------------------------------------------
+
+def _add_panel_and_measurements(
+    graph: nx.DiGraph,
+    panel_diagnosis: Any,
+    key: str,
+) -> tuple[str, dict[str, str]]:
+    """Create a panel node and its voltage/current measurement nodes."""
+    panel_id = _panel_node_id(key)
+
+    _add_node(
+        graph,
+        panel_id,
+        "solar_panel",
+        (
+            f"{panel_diagnosis.satellite} "
+            f"{panel_diagnosis.panel_label} panel\n"
+            f"{panel_diagnosis.session}"
+        ),
+        satellite=panel_diagnosis.satellite,
+        session=panel_diagnosis.session,
+        panel=panel_diagnosis.panel,
+    )
+
+    measurement_ids = {}
+
+    for measurement, label in MEASUREMENTS.items():
+        node_id = _measurement_node_id(key, measurement)
+
+        _add_node(
+            graph,
+            node_id,
+            "measurement",
+            label,
+            measurement=measurement,
+        )
+
+        _add_edge(graph, panel_id, node_id, "measures")
+        measurement_ids[measurement] = node_id
+
+    return panel_id, measurement_ids
+
+
+def _condition_count(facts: dict[str, Any], definition: dict) -> Any:
+    """Safely retrieve the count associated with a condition."""
+    return facts.get(definition["count_field"])
+
+
+def _condition_is_present(
+    fact: str,
+    facts: dict[str, Any],
+) -> bool:
+    """Determine whether an observed condition should appear in the graph."""
+    if facts.get(fact):
+        return True
+
+    # An unverifiable Type 2 candidate is shown only when no confirmed
+    # Type 2 condition is present.
+    if fact == "type2_unverifiable":
+        return bool(
+            facts.get("type2_unverifiable_count")
+            and not facts.get("type2_condition_present")
+        )
+
+    return False
+
+
+def _add_condition_nodes(
+    graph: nx.DiGraph,
+    key: str,
+    facts: dict[str, Any],
+    measurement_ids: dict[str, str],
+) -> dict[str, str]:
+    """Add observed-condition nodes and connect their supporting sensors."""
+    condition_ids = {}
+
+    for fact, definition in CONDITION_DEFINITIONS.items():
+        if not _condition_is_present(fact, facts):
+            continue
+
+        count = _condition_count(facts, definition)
+        count_label = definition["count_label"]
+
+        if count is None:
+            label = definition["label"]
+        else:
+            label = f"{definition['label']}\n({count_label} = {count})"
+
+        node_id = _condition_node_id(key, fact)
+
+        _add_node(
+            graph,
+            node_id,
+            "condition",
+            label,
+            fact=fact,
+            count=count,
+        )
+
+        for measurement in definition["measurements"]:
+            measurement_id = measurement_ids[measurement]
+            _add_edge(graph, measurement_id, node_id, "shows")
+
+        condition_ids[fact] = node_id
+
+    return condition_ids
+
+
+def _add_ml_anomaly_node(
+    graph: nx.DiGraph,
+    key: str,
+    facts: dict[str, Any],
+    measurement_ids: dict[str, str],
+) -> str | None:
+    """Add the ML anomaly node when the detector reports anomalies."""
+    anomaly_count = facts.get("ml_anomaly_count", 0)
+
+    if not anomaly_count:
+        return None
+
+    node_id = _anomaly_node_id(key)
+
+    _add_node(
+        graph,
+        node_id,
+        "anomaly",
+        f"Isolation Forest anomaly\n(n = {anomaly_count})",
+        count=anomaly_count,
+        detector="Isolation Forest",
+    )
+
+    for measurement_id in measurement_ids.values():
+        _add_edge(graph, measurement_id, node_id, "flagged")
+
+    return node_id
+
+
+# ---------------------------------------------------------------------
+# Rule, fault, and action construction
+# ---------------------------------------------------------------------
+
+def _add_diagnosis_candidate(
+    graph: nx.DiGraph,
+    candidate: Any,
+    panel_id: str,
+    condition_ids: dict[str, str],
+    anomaly_id: str | None,
+    kb: KnowledgeBase,
+) -> str | None:
+    """Add one fired diagnosis rule and its conclusion."""
+    rule_id = candidate.rule_id
+
+    # R050 represents normal operation, which has no fault evidence path.
+    if rule_id == "R050":
+        return None
+
+    rule = candidate.evaluation.rule
+    rule_node = _rule_node_id(rule_id)
+
+    _add_node(
+        graph,
+        rule_node,
+        "rule",
+        f"{rule_id} — {rule['name']}",
+        rule_id=rule_id,
+    )
+
+    linked = False
+
+    # Connect conditions that satisfy the diagnostic rule.
+    for condition in rule.get("conditions", []):
+        fact = condition.get("fact")
+        operator = condition.get("operator")
+
+        if operator != "is_true":
+            continue
+
+        source_node = condition_ids.get(fact)
+
+        if source_node:
+            _add_edge(graph, source_node, rule_node, "satisfies")
+            linked = True
+
+    # ML evidence can strengthen a rule without independently proving a fault.
+    if candidate.strengthened_by and anomaly_id:
+        _add_edge(graph, anomaly_id, rule_node, "corroborates")
+        linked = True
+
+    # Keep evaluated rules visible even when no evidence node is available.
+    if not linked:
+        _add_edge(graph, panel_id, rule_node, "evaluated for")
+
+    # Add the fault and its suggested action, if the rule has a known fault.
+    fault_id = candidate.fault_id
+
+    if not fault_id:
+        return rule_node
+
+    fault = kb.fault_by_id(fault_id)
+
+    if not fault:
+        return rule_node
+
+    fault_node = _fault_node_id(fault_id)
+
+    _add_node(
+        graph,
+        fault_node,
+        "fault",
+        fault["name"],
+        fault_id=fault_id,
+    )
+
+    _add_edge(graph, rule_node, fault_node, "concludes")
+
+    action = rule.get("suggested_action") or fault.get(
+        "suggested_action",
+        "Inspect the affected solar panel",
+    )
+
+    action_node = _action_node_id(fault_id, action)
+
+    _add_node(
+        graph,
+        action_node,
+        "action",
+        action,
+        fault_id=fault_id,
+    )
+
+    _add_edge(graph, fault_node, action_node, "recommends")
+
+    return rule_node
+
+
+# ---------------------------------------------------------------------
+# Evidence-path highlighting
+# ---------------------------------------------------------------------
+
+def _highlight_primary_path(
+    graph: nx.DiGraph,
+    panel_id: str,
+    key: str,
+    primary_rule_id: str,
+) -> None:
+    """Highlight the selected panel's evidence path to its primary rule."""
+    rule_id = _rule_node_id(primary_rule_id)
+
+    if panel_id not in graph or rule_id not in graph:
+        return
+
+    # Only include evidence belonging to this satellite/session/panel.
+    local_prefixes = (
+        f"measurement:{key}:",
+        f"condition:{key}:",
+        f"anomaly:{key}",
+    )
+
+    path_nodes = {panel_id, rule_id}
+
+    # Walk backwards from the primary rule through its evidence.
+    pending = [rule_id]
+    visited = set()
+
+    while pending:
+        current = pending.pop()
+
+        if current in visited:
+            continue
+
+        visited.add(current)
+
+        for predecessor in graph.predecessors(current):
+            is_local_evidence = predecessor == panel_id or predecessor.startswith(
+                local_prefixes
+            )
+
+            # A shared diagnostic rule is not treated as panel-specific evidence.
+            if is_local_evidence:
+                path_nodes.add(predecessor)
+                pending.append(predecessor)
+
+    # Include the primary rule's conclusion and suggested action.
+    for descendant in nx.descendants(graph, rule_id):
+        path_nodes.add(descendant)
+
+    for node_id in path_nodes:
+        graph.nodes[node_id]["on_path"] = True
+
+    for source, target in graph.edges:
+        if source in path_nodes and target in path_nodes:
+            graph.edges[source, target]["on_path"] = True
+
+
+# ---------------------------------------------------------------------
+# Public dynamic graph builder
+# ---------------------------------------------------------------------
 
 def build_knowledge_graph(
     kb: KnowledgeBase,
-    panel_diagnoses: Iterable,            # iterable of pipeline.PanelDiagnosis
+    panel_diagnoses: Iterable,
     satellite: str | None = None,
     panel: str | None = None,
     include_normal: bool = False,
-    highlight: tuple[str, str, str] | None = None,   # (satellite, session, panel)
+    highlight: tuple[str, str, str] | None = None,
 ) -> nx.DiGraph:
-    """Graph for the supplied panel diagnoses, filtered by satellite/panel."""
-    G = nx.DiGraph()
-    for pd_ in panel_diagnoses:
-        if satellite and pd_.satellite != satellite:
+    """Build an evidence-driven graph from actual panel diagnoses.
+
+    Args:
+        kb:
+            Loaded ORBITALIS knowledge base.
+        panel_diagnoses:
+            Iterable of pipeline.PanelDiagnosis objects.
+        satellite:
+            Optional satellite filter.
+        panel:
+            Optional panel-orientation filter.
+        include_normal:
+            Include normal diagnoses when True.
+        highlight:
+            Optional (satellite, session, panel) tuple identifying
+            the primary diagnosis path to highlight.
+
+    Returns:
+        A directed NetworkX graph containing panel telemetry,
+        observed conditions, ML anomalies, diagnostic rules,
+        possible faults, and inspection actions.
+    """
+    graph = nx.DiGraph()
+    _initialise_graph(graph)
+
+    for panel_diagnosis in panel_diagnoses:
+
+        # Apply requested filters.
+        if satellite and panel_diagnosis.satellite != satellite:
             continue
-        if panel and pd_.panel != panel:
+
+        if panel and panel_diagnosis.panel != panel:
             continue
-        d = pd_.diagnosis
-        if d.status == "normal" and not include_normal:
+
+        diagnosis = panel_diagnosis.diagnosis
+
+        if diagnosis.status == "normal" and not include_normal:
             continue
-        facts = d.facts
-        key = f"{pd_.satellite}:{pd_.session}:{pd_.panel}"
-        is_hl = highlight == (pd_.satellite, pd_.session, pd_.panel)
-        path: list[str] = []
 
-        p_id = f"panel:{key}"
-        _add(G, p_id, "solar_panel", f"{pd_.satellite} {pd_.panel_label} panel\n{pd_.session}")
-        path.append(p_id)
-        m_ids = {}
-        for m, mlabel in (("voltage", "Voltage (mV)"), ("current", "Current (mA)")):
-            m_ids[m] = f"meas:{key}:{m}"
-            _add(G, m_ids[m], "measurement", mlabel)
-            _edge(G, p_id, m_ids[m], "measures")
+        key = _panel_key(
+            panel_diagnosis.satellite,
+            panel_diagnosis.session,
+            panel_diagnosis.panel,
+        )
 
-        cond_nodes: dict[str, str] = {}
-        for fact, (sensors, text) in _CONDITION_FACTS.items():
-            if facts.get(fact) or (fact == "type2_unverifiable" and facts.get("type2_unverifiable_count")
-                                    and not facts.get("type2_condition_present")):
-                count = {"type1_condition_present": facts.get("v_below_threshold_count"),
-                         "type2_condition_present": facts.get("type2_match_count"),
-                         "type2_unverifiable": facts.get("type2_unverifiable_count"),
-                         "type2_minimal_pattern_only": facts.get("type2_longest_run")}[fact]
-                c_id = f"cond:{key}:{fact}"
-                _add(G, c_id, "condition", f"{text}\n({'longest run' if fact == 'type2_minimal_pattern_only' else 'n'}={count})")
-                for s in sensors.split("_"):
-                    _edge(G, m_ids[s], c_id, "shows")
-                cond_nodes[fact] = c_id
-        if facts.get("ml_anomaly_count"):
-            a_id = f"anom:{key}"
-            _add(G, a_id, "anomaly", f"Isolation Forest anomaly\n(n={facts['ml_anomaly_count']})")
-            for s in ("voltage", "current"):
-                _edge(G, m_ids[s], a_id, "flagged")
-            cond_nodes["ml_anomaly_present"] = a_id
+        panel_id, measurement_ids = _add_panel_and_measurements(
+            graph,
+            panel_diagnosis,
+            key,
+        )
 
-        # diagnosis rules that fired in this window (observation rules R001-R006 are
-        # internal derivation steps and are shown through the condition nodes)
-        for cand in d.candidates:
-            if cand.rule_id == "R050":      # normal operation has no evidence path
-                continue
-            rule = cand.evaluation.rule
-            r_id = f"rule:{cand.rule_id}"
-            _add(G, r_id, "rule", f"{cand.rule_id} {rule['name']}")
-            linked = False
-            for cond in rule["conditions"]:
-                src = cond_nodes.get(cond["fact"])
-                if src and cond["operator"] == "is_true":
-                    _edge(G, src, r_id, "satisfies")
-                    linked = True
-            if cand.strengthened_by and "ml_anomaly_present" in cond_nodes:
-                _edge(G, cond_nodes["ml_anomaly_present"], r_id, "corroborates")
-                linked = True
-            if not linked:
-                _edge(G, p_id, r_id, "evaluated for")
-            fault = kb.fault_by_id(cand.fault_id) if cand.fault_id else None
-            if fault:
-                f_id = f"fault:{fault['fault_id']}"
-                _add(G, f_id, "fault", fault["name"], fault_id=fault["fault_id"])
-                act = f"action:{fault['fault_id']}"
-                _add(G, act, "action", rule.get("suggested_action", "Inspect")[:70])
-                _edge(G, r_id, f_id, "concludes")
-                _edge(G, f_id, act, "recommends")
+        condition_ids = _add_condition_nodes(
+            graph,
+            key,
+            diagnosis.facts,
+            measurement_ids,
+        )
 
-        # highlight the evidence path of the primary diagnosis
-        if is_hl and d.primary:
-            prim = f"rule:{d.primary.rule_id}"
-            if prim in G:
-                nodes_on = {p_id, prim}
-                for anc in nx.ancestors(G, prim):
-                    if anc.startswith((f"meas:{key}", f"cond:{key}", f"anom:{key}", "rule:")) or anc == p_id:
-                        nodes_on.add(anc)
-                for desc in nx.descendants(G, prim):
-                    nodes_on.add(desc)
-                for n in nodes_on:
-                    G.nodes[n]["on_path"] = True
-                for a, b in G.edges:
-                    if a in nodes_on and b in nodes_on:
-                        G.edges[a, b]["on_path"] = True
-    return G
+        anomaly_id = _add_ml_anomaly_node(
+            graph,
+            key,
+            diagnosis.facts,
+            measurement_ids,
+        )
+
+        # Add all fired diagnosis candidates.
+        for candidate in diagnosis.candidates:
+            _add_diagnosis_candidate(
+                graph=graph,
+                candidate=candidate,
+                panel_id=panel_id,
+                condition_ids=condition_ids,
+                anomaly_id=anomaly_id,
+                kb=kb,
+            )
+
+        # Highlight only the requested panel's primary diagnosis path.
+        if (
+            highlight == (
+                panel_diagnosis.satellite,
+                panel_diagnosis.session,
+                panel_diagnosis.panel,
+            )
+            and diagnosis.primary
+        ):
+            _highlight_primary_path(
+                graph=graph,
+                panel_id=panel_id,
+                key=key,
+                primary_rule_id=diagnosis.primary.rule_id,
+            )
+
+    return graph
