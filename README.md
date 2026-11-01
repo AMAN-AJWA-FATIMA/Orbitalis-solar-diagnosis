@@ -1,9 +1,15 @@
-# ORBITALIS
+# ORBITALIS – Satellite Solar Panel Fault Diagnosis
 **A Hybrid Knowledge-Based System for Satellite Solar Panel Fault Diagnosis**
 
 ORBITALIS analyses real on-orbit solar-panel telemetry of BIRDS CubeSats (RAAVANA, UGUISU), detects unusual
 behaviour with an Isolation Forest, and diagnoses *possible documented faults* with a forward-chaining
 rule engine whose rules come from published research. Every conclusion is explained from the actual evidence.
+
+## Live Application
+
+Access the deployed application:
+[Launch ORBITALIS Application](https://orbitalis-solar-diagnosis-kbs.streamlit.app/diagnosis)
+The application provides interactive satellite telemetry analysis, anomaly detection, explainable fault diagnosis, knowledge graph visualization, and diagnosis history.
 
 ## 1. Problem statement
 Reduced power generation of a CubeSat solar panel is hard to notice from raw telemetry; two BIRDS-3 satellites lost
